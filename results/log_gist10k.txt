@@ -1,0 +1,9 @@
+[gist_N10000_m4_E64] N=10000 d=960 m=4 M=8 E=64 Tb=128
+[server] built in 2.9s  {'hnsw_build': 0.21571779251098633, 'graph_import': 0.04888653755187988, 'flatten_tables': 2.529311418533325, 'server_total': 2.817751407623291}  U=2608 layers=6
+[accuracy] 1000 queries in 3.0s
+[accuracy] {'recall_secure_vs_float_gt': 0.9052, 'recall_secure_vs_quantized_gt': 0.918, 'recall_exact_greedy_hnsw_vs_float_gt': 0.9055, 'recall_hnswlib_vs_quantized_gt': 0.9184, 'frac_queries_recall1': 0.424, 'min_recall': 0.2, 'lsh_failure_rate': 0.5881, 'lsh_empty_rate': 0.0, 'bucket_cap_loss': 0.6765}
+[secure] 64 queries, wall 17.8s, identical to plain emulation: 64/64
+[latency] server read1d compute with 1 threads: 12.457s
+[latency] server read1d compute with 8 threads: 1.554s
+[latency] server read1d compute with 64 threads: 0.493s
+wrote results/gist_N10000_m4_E64.json

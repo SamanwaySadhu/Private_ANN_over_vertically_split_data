@@ -1,0 +1,16 @@
+{
+  "library": "emp-tool/emp-ot legacy (header-only gates, half-gates + MITCCRH, AES-NI)",
+  "aes128_and_gates": {"bristol_fashion_aes_128.txt": 6400, "bristol_format_AES-non-expanded.txt": 6800},
+  "gc_single_thread": {"circuit": "repeated 32-bit add + compare + mux (Integer class), garbler inputs", "and_gates": 40090000, "garble_s": 1.1833, "eval_s": 1.0932, "garble_and_per_s": 33879041, "eval_and_per_s": 36672956, "table_bytes": 1282880000, "bytes_per_and": 32.0000, "input_label_bytes": 216064, "bytes_per_input_label": 16, "verified_correct": true},
+  "gc_localhost_tcp_pipelined_pair": {"and_gates": 40090000, "wall_s": 1.7348, "and_per_s_end_to_end": 23109697, "garbler_bytes_sent": 1283096112},
+  "gc_parallel_independent_pairs": [
+    {"T": 1, "and_per_pair": 20000000, "wall_s": 1.144, "agg_garble_and_per_s_sum_of_thread_rates": 33917459, "agg_eval_and_per_s_sum_of_thread_rates": 36656403, "agg_pair_and_per_s_wall": 17606183, "verified_correct": true},
+    {"T": 8, "and_per_pair": 20000000, "wall_s": 1.321, "agg_garble_and_per_s_sum_of_thread_rates": 260930943, "agg_eval_and_per_s_sum_of_thread_rates": 284135711, "agg_pair_and_per_s_wall": 121997006, "verified_correct": true},
+    {"T": 64, "and_per_pair": 20000000, "wall_s": 1.379, "agg_garble_and_per_s_sum_of_thread_rates": 2023147504, "agg_eval_and_per_s_sum_of_thread_rates": 2297905676, "agg_pair_and_per_s_wall": 934541150, "verified_correct": true}
+  ],
+  "ot": {
+    "iknp_correlated_ot_128bit": {"num_ot": 4194304, "setup_s": 0.0105, "setup_bytes_total": 12997, "run_s": 0.0551, "ot_per_s": 76069863, "bytes_sender_to_receiver": 0, "bytes_receiver_to_sender": 67108864, "bytes_total_per_ot": 16.0000, "verified_correct": true},
+    "iknp_chosen_message_ot_128bit": {"num_ot": 4194304, "setup_s": 0.0097, "setup_bytes_total": 12997, "run_s": 0.1258, "ot_per_s": 33334366, "bytes_sender_to_receiver": 134217744, "bytes_receiver_to_sender": 67108864, "bytes_total_per_ot": 48.0000, "verified_correct": true},
+    "ferret_correlated_ot_128bit": {"num_ot": 8388608, "setup_s": 0.0369, "setup_bytes_total": 1166791, "run_s": 0.5664, "ot_per_s": 14810160, "bytes_sender_to_receiver": 559456, "bytes_receiver_to_sender": 1048576, "bytes_total_per_ot": 0.1917, "verified_correct": true}
+  }
+}
