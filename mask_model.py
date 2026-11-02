@@ -10,11 +10,15 @@ from costmodel import load_cal
 from report import fmt_b, fmt_t
 
 TAG = sys.argv[1] if len(sys.argv) > 1 else "sift_N1000000_m4_E64_mask"
-S_CORES, C_CORES = 64, 8
+import os
+S_CORES = 448
+C_CORES = int(os.environ.get("CLIENT_CORES", 448))      # clients also use all cores
 RTT, BW = 0.1e-3, 10e9 / 8            # LAN: 0.1 ms, 10 Gbps per link
 
 res = json.load(open(f"results/{TAG}.json"))
-ker = json.load(open(f"results/kernel_{TAG}.json"))
+import os.path
+det = json.load(open(f"results/detail_{TAG}.json")) if os.path.exists(f"results/detail_{TAG}.json") else None
+ker = json.load(open(f"results/kernel_{TAG}.json")) if os.path.exists(f"results/kernel_{TAG}.json") else None
 a_ = res["args"]; m = a_["m"]
 he, gc = load_cal()
 H = he(m)
@@ -90,8 +94,19 @@ for (a, n, K), calls in reads.items():
            + a * math.log2(slots) * H["t_ct_ct"] + (m - 1) * rch * H["t_sub"] + rch * H["t_add"])
     tcomp("Read correlations (HE)", "S", cnum * srv / S_CORES)
 
+# Lagrange key one-hot (public-LSH variant): alpha^1..alpha^(R-1) via HE, Enc2Share per power, one conversion per radius per query
+lag = {int(k.split(":")[1]): v for k, v in mts[0]["cnt"].items() if k.startswith("lag_conv:")}
+for R, nconv in lag.items():
+    cn = nconv
+    for i in range(1, m + 1):
+        tcomp("Key-onehot alpha powers (HE)", f"C{i}", cn * (H["t_enc"] + (i >= 2) * R * H["t_enc"] + R * (H["t_pdec_lead"] + H["t_fusion"] if i == 1 else H["t_pdec_main"])) / C_CORES)
+        bytes_("Key-onehot alpha powers (HE)", f"C{i}", "S", cn * (1 + (i >= 2) * R) * ct)
+        bytes_("Key-onehot alpha powers (HE)", "S", f"C{i}", cn * R * ct2)
+        if i >= 2:
+            bytes_("Key-onehot alpha powers (HE)", f"C{i}", "C1", cn * R * pdm)
+    tcomp("Key-onehot alpha powers (HE)", "S", cn * (R * H["t_ct_ct"] + (m - 1) * H["t_add"] + R * (m - 1) * H["t_sub"]) / S_CORES)
 off_comp = list(off_t.keys() | off_b.keys())
-order = ["GC garbling", "GC tables", "OT extension", "Beaver triples (HE)", "Read correlations (HE)"]
+order = ["GC garbling", "GC tables", "OT extension", "Beaver triples (HE)", "Read correlations (HE)", "Key-onehot alpha powers (HE)"]
 off_comp = [c for c in order if c in off_comp]
 
 # ============================== ONLINE (per query) ==============================
@@ -106,14 +121,41 @@ for k in set(cs) | set(cr) | set(ss) | set(sr):
     on_b[cat]["S"][0] += ss.get(k, 0)
     on_b[cat]["S"][1] += sr.get(k, 0)
 flights = sum(fl.values())
-ker_T = str(min((int(t) for t in ker), key=lambda t: abs(math.log(t) - math.log(S_CORES))))
 on_t = defaultdict(lambda: defaultdict(float))
-on_t["Masked 1-D reads A.(e-r) (matrix products)"]["S"] = ker[ker_T]
+TS_, TC_ = str(S_CORES), str(C_CORES)
+if det is not None:
+    srv_t = cli_mask = cli_post = cli_bv = cli_lag = 0.0
+    for key, d in det["reads"].items():
+        t = d[TS_] if TS_ in d else d[sorted(d.keys() - {"calls"})[-1]]
+        tc = d[TC_] if TC_ in d else t
+        srv_t += d["calls"] * (t["prep"] + t["tiled"] + t["reduce"])
+        cli_mask += d["calls"] * tc["mask"]
+        cli_post += d["calls"] * tc["post"]
+    for key, d in det["bv"].items():
+        tc = d[TC_] if TC_ in d else d[sorted(d.keys() - {"calls"})[-1]]
+        cli_bv += d["calls"] * (tc["open"] + tc["finish"] + tc["dsum"])
+    for key, d in det["lag"].items():
+        tc = d[TC_] if TC_ in d else d[sorted(d.keys() - {"calls"})[-1]]
+        cli_lag += d["calls"] * tc["lag"]
+    on_t["Masked 1-D reads A.(e-r) (matrix products)"]["S"] = srv_t
+else:
+    ker_T = str(min((int(t) for t in ker), key=lambda t: abs(math.log(t) - math.log(S_CORES))))
+    on_t["Masked 1-D reads A.(e-r) (matrix products)"]["S"] = ker[ker_T]
 on_t["OT sender (label transfer)"]["S"] = ot_per_client * m / gc["ot_per_s"] / S_CORES
 on_t["GC evaluation"]["C1"] = ands / gc["eval_rate"](C_CORES)
+lagt = sum(float(v) for k, v in tcli.items() if "lag_onehot" in k)
 for i in range(1, m + 1):
     on_t["OT receiver"][f"C{i}"] = ot_per_client / gc["ot_per_s"] / C_CORES
-    on_t["Local share arithmetic (Beaver, e-r, ...)"][f"C{i}"] = sum(float(v) for v in tcli.values())
+    if det is not None:
+        on_t["Client: masked selector e_i - r_i (all cores)"][f"C{i}"] = cli_mask
+        on_t["Client: Beaver products incl. distance sums (all cores)"][f"C{i}"] = cli_bv
+        on_t["Client: reply combination [y]+[h]"][f"C{i}"] = cli_post
+        if cli_lag:
+            on_t["Key one-hot, local Lagrange evaluation (real, all cores)"][f"C{i}"] = cli_lag
+    else:
+        on_t["Local share arithmetic (Beaver, e-r, ...)"][f"C{i}"] = sum(float(v) for v in tcli.values()) - lagt
+        if lagt:
+            on_t["Key one-hot, local Lagrange evaluation (real)"][f"C{i}"] = lagt
 busy = {p: sum(d.get(p, 0.0) for d in on_t.values()) for p in P}
 tot_by = {p: [sum(d[p][0] for d in on_b.values()), sum(d[p][1] for d in on_b.values())] for p in P}
 t_bw = max(max(v) for v in tot_by.values()) / BW
@@ -189,6 +231,6 @@ json.dump(dict(off_t={c: dict(d) for c, d in off_t.items()}, off_b={c: {p: v for
                comm_t=comm_t, t_bw=t_bw, t_lat=t_lat, triples=triples, nb=nb, ands=float(ands),
                n_corr=sum(c * K for (a, n, K), c in reads.items()), ot_per_client=ot_per_client,
                kg=kg, kb=kb, server_build=res["server_build"]["times"], accuracy=res["accuracy"],
-               args=res["args"], U=res["server_build"]["sizes"]["U"],
+               args=res["args"], U=res["server_build"]["sizes"]["U"], client_cores=C_CORES, server_cores=S_CORES,
                gc_total_bytes=32 * float(ands)), open(f"results/breakdown_{TAG}.json", "w"), default=float)
 print("\n".join(L))

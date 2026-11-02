@@ -20,6 +20,8 @@ import fastops
 from datasets import load
 from vsann import Params, plain_protocol
 from scaled import ServerScaled
+from server_pub import ServerPublic
+from plain_pub import plain_protocol_pub
 from engine import prepare, run_query
 
 G = {}
@@ -28,6 +30,9 @@ G = {}
 def _acc_worker(qi):
     srv, D = G["srv"], G["D"]
     q = D["Q"][qi]
+    if G["mode"] == "pub":
+        pres, st = plain_protocol_pub(srv, q)
+        return qi, pres, srv.hnsw_search(q, srv.prm.E, srv.prm.k), {k: int(v) for k, v in st.items()}
     pres, trace, info = plain_protocol(srv, q)
     st = Counter()
     for tr in trace:
@@ -84,11 +89,11 @@ def main():
     ap.add_argument("--workers", type=int, default=os.cpu_count())
     ap.add_argument("--threads", default="1,8,64")
     ap.add_argument("--tag", default="")
-    ap.add_argument("--mode", default="he", choices=["he", "mask"], help="mask: HE only in preprocessing (DELPHI-style)")
+    ap.add_argument("--mode", default="he", choices=["he", "mask", "pub"], help="mask: HE only in preprocessing (DELPHI-style)")
     ap.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
     Tb = a.Tb or 2 * a.E
-    tag = a.tag or f"{a.dataset}_N{a.N}_m{a.m}_E{a.E}" + ("_mask" if a.mode == "mask" else "")
+    tag = a.tag or f"{a.dataset}_N{a.N}_m{a.m}_E{a.E}" + ({"mask": "_mask", "pub": "_pub"}.get(a.mode, ""))
     out = {"args": vars(a), "tag": tag}
 
     D = load(a.dataset, a.N, a.nq, a.k, a.seed)
@@ -96,7 +101,7 @@ def main():
                  rho=tuple(0.5 * 2 ** r for r in range(a.s)), seed=a.seed)
     print(f"[{tag}] N={D['N']} d={D['d']} m={a.m} M={a.M} E={a.E} Tb={Tb}", flush=True)
     t0 = time.time()
-    srv = ServerScaled(D["X"], prm, procs=a.workers)
+    srv = (ServerPublic if a.mode == "pub" else ServerScaled)(D["X"], prm, procs=a.workers)
     print(f"[server] built in {time.time() - t0:.1f}s  {srv.t}  U={srv.U} layers={srv.top + 1}", flush=True)
     prep = prepare(srv, mask=a.mode == "mask")
     bs = srv.build_stats
@@ -137,8 +142,8 @@ def main():
         recall_exact_greedy_hnsw_vs_float_gt=float(np.mean(r_ex_f)), recall_hnswlib_vs_quantized_gt=float(np.mean(r_lib_q)),
         frac_queries_recall1=float(np.mean(np.array(r_sec_f) == 1)), min_recall=float(min(r_sec_f)),
         lsh=dict(agg), quantization_note="sift: exact integers; gist: global 8-bit quantisation",
-        lsh_failure_rate=agg["missed"] / max(1, agg["improve_exists"]),
-        lsh_empty_rate=agg["empty_all_radii"] / max(1, agg["active"]),
+        lsh_failure_rate=agg["missed"] / max(1, agg["improve_exists"] or agg["improve"]),
+        lsh_empty_rate=(agg["empty_all_radii"] or agg["empty"]) / max(1, agg["active"] or agg["steps"]),
         bucket_cap_loss=1 - bs["kept"] / max(1, bs["points"]))
     print("[accuracy]", {k: round(v, 4) for k, v in out["accuracy"].items() if isinstance(v, float)}, flush=True)
 

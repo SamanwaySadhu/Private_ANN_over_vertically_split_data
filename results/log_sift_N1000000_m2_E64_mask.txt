@@ -1,0 +1,6 @@
+[sift_N1000000_m2_E64_mask] N=1000000 d=128 m=2 M=8 E=64 Tb=128
+[server] built in 49.3s  {'hnsw_build': 10.255249261856079, 'graph_import': 1.6508152484893799, 'flatten_tables': 30.67178988456726, 'server_total': 47.81747317314148}  U=267213 layers=8
+[accuracy] 1000 queries in 14.3s
+[accuracy] {'recall_secure_vs_float_gt': 0.8594, 'recall_secure_vs_quantized_gt': 0.8594, 'recall_exact_greedy_hnsw_vs_float_gt': 0.8762, 'recall_hnswlib_vs_quantized_gt': 0.8763, 'frac_queries_recall1': 0.443, 'min_recall': 0.0, 'lsh_failure_rate': 0.579, 'lsh_empty_rate': 0.0965, 'bucket_cap_loss': 0.7175}
+[secure] 32 queries, wall 766.7s, identical to plain emulation: 32/32
+wrote results/sift_N1000000_m2_E64_mask.json

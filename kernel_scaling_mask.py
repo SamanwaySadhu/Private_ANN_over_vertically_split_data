@@ -17,7 +17,7 @@ for k, v in r["secure"]["meters"][0]["cnt"].items():
         reads[(int(a), int(n), int(K))] = v
 rng = np.random.default_rng(0)
 out = {}
-for T in (8, 64, 128):
+for T in (8, 64, 448):
     out[T] = sum(cnt * one_read(a, n, K, m, T, rng) for (a, n, K), cnt in reads.items())
     print(tag, T, round(out[T], 2), flush=True)
 json.dump(out, open(f"results/kernel_{tag}.json", "w"))

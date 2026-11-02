@@ -1,3 +1,3 @@
-sift_N1000000_m4_E32_mask 8 43.03
-sift_N1000000_m4_E32_mask 64 23.42
-sift_N1000000_m4_E32_mask 128 18.06
+sift_N1000000_m4_E32_mask 8 11.76
+sift_N1000000_m4_E32_mask 64 2.95
+sift_N1000000_m4_E32_mask 448 2.3

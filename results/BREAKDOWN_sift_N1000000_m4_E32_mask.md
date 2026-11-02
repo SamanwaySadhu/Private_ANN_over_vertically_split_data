@@ -1,4 +1,4 @@
-# sift_N1000000_m4_E32_mask: complete per-party breakdown (LAN 10 Gbps / 0.1 ms; server 64 cores, each client 8 cores; m=4, C1 = GC evaluator)
+# sift_N1000000_m4_E32_mask: complete per-party breakdown (LAN 10 Gbps / 0.1 ms; server 448 cores, each client 8 cores; m=4, C1 = GC evaluator)
 
 HE is used ONLY in preprocessing (threshold BFV: Beaver triples and (r,s,h) read correlations). Online uses masked plaintext values, Beaver products, and garbled circuits. Online server read time and all online byte/round counts are measured from the executed protocol; HE/GC/OT preprocessing times and bytes are modelled from native micro-benchmarks (calib/).
 
@@ -22,12 +22,12 @@ HE is used ONLY in preprocessing (threshold BFV: Beaver triples and (r,s,h) read
 
 | component | Server | C1 (evaluator) | each other client |
 |---|---|---|---|
-| GC garbling | 67 ms | 0 ms | 0 ms |
+| GC garbling | 10 ms | 0 ms | 0 ms |
 | GC tables | 0 ms | 0 ms | 0 ms |
-| OT extension | 7 ms | 15 ms | 15 ms |
-| Beaver triples (HE) | 7 ms | 44 ms | 57 ms |
-| Read correlations (HE) | 11.0 min | 81.3 s | 81.8 s |
-| **total** | **11.0 min** | **81.3 s** | **81.9 s** |
+| OT extension | 1 ms | 15 ms | 15 ms |
+| Beaver triples (HE) | 1 ms | 44 ms | 57 ms |
+| Read correlations (HE) | 94.1 s | 81.3 s | 81.8 s |
+| **total** | **94.1 s** | **81.3 s** | **81.9 s** |
 
 ### 2b. Communication (sent / received)
 
@@ -48,12 +48,12 @@ Offline phase: 220,288 Beaver triples (27 HE batches of 8192), 135,162,588 GC AN
 
 | component | Server | C1 (evaluator) | each other client |
 |---|---|---|---|
-| Masked 1-D reads A.(e-r) (matrix products) | 23.4 s | 0 ms | 0 ms |
-| OT sender (label transfer) | 17 ms | 0 ms | 0 ms |
+| Masked 1-D reads A.(e-r) (matrix products) | 2.3 s | 0 ms | 0 ms |
+| OT sender (label transfer) | 2 ms | 0 ms | 0 ms |
 | GC evaluation | 0 ms | 471 ms | 0 ms |
 | OT receiver | 0 ms | 34 ms | 34 ms |
 | Local share arithmetic (Beaver, e-r, ...) | 0 ms | 12.8 s | 12.8 s |
-| **total busy compute** | **23.4 s** | **13.3 s** | **12.9 s** |
+| **total busy compute** | **2.3 s** | **13.3 s** | **12.9 s** |
 
 ### 3b. Communication (sent / received)
 
@@ -74,7 +74,7 @@ Offline phase: 220,288 Beaver triples (27 HE batches of 8192), 135,162,588 GC AN
 
 Online rounds: **1074 message flights = 537 round trips**. LAN communication time: 54 ms for round latency + 14.1 s for transfer = 14.2 s.
 
-Online latency (compute of server + C1, plus LAN communication, no overlap): **51.0 s**. Wait: server idle 27.5 s, C1 idle 37.6 s, other clients idle 38.1 s.
+Online latency (compute of server + C1, plus LAN communication, no overlap): **29.8 s**. Wait: server idle 27.5 s, C1 idle 16.5 s, other clients idle 16.9 s.
 
 ## 4. Totals (offline + online, per query)
 

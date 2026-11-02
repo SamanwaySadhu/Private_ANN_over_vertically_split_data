@@ -12,7 +12,7 @@ import numpy as np
 from numba import njit, prange
 
 import fastops
-from fastops import P, matvec_mod
+from fastops import P, matvec_mod, server_read
 
 
 @njit(parallel=True, cache=True)
@@ -31,13 +31,15 @@ def one_read(a, n, K, m, T, rng):
     nb.set_num_threads(T)
     fastops.PARALLEL = T > 1
     A = rng.integers(0, 256, (a, n), dtype=np.uint32)
-    q = rng.integers(0, P, (m, K * n), dtype=np.uint64)
-    reps = 1
+    q = rng.integers(0, P, (m, K, n), dtype=np.uint64)
     best = 1e30
     for _ in range(3):
         t0 = time.perf_counter()
-        qa = sum_mod(q).reshape(K, n)
-        matvec_mod(A, qa.T)
+        if T > 1:
+            server_read(A, q)
+        else:
+            qa = (q.sum(0) % np.uint64(P))
+            matvec_mod(A, qa.T)
         best = min(best, time.perf_counter() - t0)
     return best
 

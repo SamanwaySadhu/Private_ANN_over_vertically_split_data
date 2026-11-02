@@ -59,6 +59,8 @@ class GCModel:
             eq = s * (4 + 2 * p.sigma) * l
             sel = s * p.Pn * (2 * lid + 3)
             return eq + sel
+        if name == "match_direct":                  # first-nonempty-radius priority over s x 2 directly addressed probes
+            return s * 2 * (2 * lid + 3)
         if name == "transition":
             return ld + 2 * lid + ld + lrow + 40
         if name == "beam_init":

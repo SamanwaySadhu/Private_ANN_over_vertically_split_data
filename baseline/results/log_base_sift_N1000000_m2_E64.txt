@@ -1,0 +1,6 @@
+[base_sift_N1000000_m2_E64] N=1000000 d=128 m=2 M=8 E=64 Tb=128
+[server] {'hnsw_build': 11.93483567237854, 'graph_import': 1.7051427364349365, 'flatten_tables': 4.987031936645508, 'server_total': 25.10382628440857} U=142520 layers=8
+[accuracy] 1000 queries in 2.2s
+[accuracy] {'recall_secure_vs_float_gt': 0.8739, 'recall_secure_vs_quantized_gt': 0.8739, 'recall_exact_greedy_hnsw_vs_float_gt': 0.8739, 'recall_hnswlib_vs_quantized_gt': 0.874, 'frac_queries_recall1': 0.464, 'min_recall': 0.1, 'upper_unfinished_rate': 0.0, 'mean_upper_moves': 6.568, 'beam_live_end_rate': 0.0}
+[secure] 8 queries, wall 0.7s, identical to plain emulation: 8/8
+wrote baseline/results/base_sift_N1000000_m2_E64.json

@@ -111,12 +111,12 @@ sheet("Online_comm", hc, comm_rows("on_b"), {3: 20})
 # ---------------- notes ----------------
 ws = wb.create_sheet("Notes")
 notes = [
-    "SIFT1M (1,000,000 x 128), LAN only: 10 Gbps per link, 0.1 ms RTT. Server 64 cores, each client 8 cores. k=10, M=8, efConstruction=100, Tg=12, s=6, Tb=2E.",
+    "SIFT1M (1,000,000 x 128), LAN only: 10 Gbps per link, 0.1 ms RTT. Server uses all 448 cores, each client 8 cores. k=10, M=8, efConstruction=100, Tg=12, s=6, Tb=2E.",
     "Protocol: HE (threshold BFV) is used ONLY in preprocessing, to build the single-use (r,s,h) read correlations and Beaver triples. Online = masked plaintext reads, Beaver products, garbled circuits. HE is not used online.",
     "C1 is the garbled-circuit evaluator (receives the GC tables, evaluates, receives forwarded labels). The server garbles. 'other client' = C2..Cm (identical by symmetry).",
-    "MEASURED (executed): online bytes per party, message flights, AND-gate counts, server 1-D-read matrix-product time (64 threads), client local share arithmetic (single-thread numpy), recall, server one-time build time.",
+    "MEASURED (executed): online bytes per party, message flights, AND-gate counts, server 1-D-read matrix-product time (all 448 threads, cache-tiled numba kernel, re-measured on the full read set of each configuration), client local share arithmetic (single-thread numpy), recall, server one-time build time.",
     "MODELLED from native micro-benchmarks (calib/): all preprocessing compute and bytes for GC garbling, OT extension, HE-based Beaver triples and read correlations; HE keygen; GC evaluation and OT time online.",
-    "Read-correlation server compute is an upper bound: it prices 13 rotations per matrix row at the ct*ct key-switch time. HE ops are parallelised over independent ciphertexts across the party's cores.",
+    "Read-correlation server compute is an upper bound: it prices 13 rotations per matrix row at the ct*ct key-switch time. HE ops are parallelised over independent ciphertexts across the party's cores (server 448 cores: linear extrapolation of the single-core calibrations, only the matrix products are measured at 448 threads). The online matrix product stops speeding up beyond ~64 threads (memory-bandwidth bound).",
     "Preprocessing is per query (correlations are single-use). One-time costs (graph build, keygen) are in OneTime_Preproc.",
     "Ideal functionality (not charged beyond one opening): shared ID -> one-hot conversion. The Sec. 4 Lagrange construction is O(n^2) per client and is not included in any time.",
     "Online latency = server compute + C1 compute + LAN communication (no overlap). Communication time = flights x RTT/2 + max-link bytes / bandwidth.",
@@ -131,5 +131,7 @@ for row in ws.iter_rows():
     for c in row:
         c.alignment = Alignment(wrap_text=True, vertical="top")
 wb.move_sheet("Notes", offset=-(len(wb.sheetnames) - 1))
-wb.save("SIFT1M_LAN_breakdown.xlsx")
-print("wrote SIFT1M_LAN_breakdown.xlsx with", len(runs), "configurations;", wb.sheetnames)
+import sys
+OUT = sys.argv[1] if len(sys.argv) > 1 else "SIFT1M_LAN_breakdown.xlsx"
+wb.save(OUT)
+print("wrote", OUT, "with", len(runs), "configurations;", wb.sheetnames)
