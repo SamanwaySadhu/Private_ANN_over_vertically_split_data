@@ -530,6 +530,158 @@ class SecurePublic(SecureFast):
         return v, dv
 
 
+class SecureNodePub(SecurePublic):
+    """PER-NODE PUBLIC-LSH variant: every upper node has its own (a, b, w) per radius, known to all clients (public table).
+    The visited row is secret, so (doc private_selection_preprocessing_lsh):
+      * once per query each client quantises its own block for ALL rows and radii locally: q_i[row,r] = floor(B t_i)  (additive shares of Q'[row,r]);
+      * every upper iteration the visited row's Q'_r is selected privately: Beaver dot product of the shared one-hot of the row with those shares;
+      * one masked opening tau = Q'_r - alpha_r per radius, then fused truncation + one-hot by local Lagrange evaluation (real arithmetic);
+      * the directly addressed dictionary row (masked read) is combined with the key one-hot by a Beaver dot product.
+    No garbled circuit and no secret division for the hash."""
+    CH = 4096
+
+    def client_hash_all(self, qplain):
+        prm, srv, mt = self.prm, self.srv, self.mt
+        nd, m, s, U, B = srv.node, prm.m, prm.s, srv.U, srv.pub["B"]
+        nq_ = fastops.nk()[0]
+        Qall = np.empty((m, s, U), np.int64)
+        x = qplain.astype(np.int64)
+        tt = 0.0
+        for i, blk in enumerate(prm.blocks):
+            t0 = time.perf_counter()
+            nq_(nd["a"], int(blk[0]), int(blk[-1]) + 1, x, nd["b"], nd["w"], nd["kmin"], 1 if i == 0 else 0, B, prm.Sw, prm.Sa, prm.Sq, Qall[i])
+            tt += time.perf_counter() - t0
+        mt.tcli[("setup", "hash_allrows")] += tt / m                       # every client does its own block
+        mt.cnt["hash_allrows_macs"] += int(U * s * prm.d)
+        return np.mod(Qall, P)
+
+    def select_dot(self, e, Qall):
+        """[Q'_r] = sum_row [e_row] [Q'[row, r]]  for all radii: one Beaver dot product per radius; the mask of e is reused across radii."""
+        c, mt, prm = self.c, self.mt, self.prm
+        m, s, U = Qall.shape
+        _, sel_open, sel_part = fastops.nk()
+        A = c.rint((U,)); Bm = c.rint((s, U))                              # dealer (offline)
+        Cr = np.mod(np.mod(A[None, :] * Bm, P).sum(1), P)
+        SA, SB, SC = c.share(A), c.share(Bm), c.share(Cr)
+        ee = np.empty(U, np.int64); ff = np.empty((s, U), np.int64)
+        Ef, SAf, Qf, SBf = (np.ascontiguousarray(z) for z in (e, SA, Qall, SB))
+        t0 = time.perf_counter()
+        sel_open(Ef, SAf, Qf, SBf, ee, ff)
+        t1 = time.perf_counter()
+        nch = (U + self.CH - 1) // self.CH
+        part = np.empty(m * s * nch, np.int64)
+        sel_part(ee, ff, SAf, SBf, part, self.CH)
+        Z = np.mod(part.reshape(m, s, nch).sum(-1) + SC, P)
+        t2 = time.perf_counter()
+        mt.tcli[mt.k("beaver_sel:open")] += (t1 - t0) / m
+        mt.tcli[mt.k("beaver_sel:finish")] += (t2 - t1) / m
+        mt.a2a("beaver_sel", (1 + s) * U * BPE)                            # open e - A (U) and Q - B (s*U), all-to-all
+        mt.flights("beaver_sel", 1)
+        mt.cnt[("triples", mt.phase)] += s * U
+        mt.cnt[f"bv:beaver_sel:{s * U}"] += 1
+        return Z                                                           # (m, s) shares of Q'_r(visited row)
+
+    def lag_onehots(self, Qsel):
+        from vsann import lag_tables
+        prm, srv, c, mt = self.prm, self.srv, self.c, self.mt
+        pub, m, s, Bq = srv.pub, prm.m, prm.s, srv.pub["B"]
+        ehat = []
+        for r in range(s):
+            K = pub["K"][r]
+            R = K * Bq
+            Cl, Bn, Dm = lag_tables(R)
+            Cg = np.zeros((K, R), np.int64)
+            for j in range(K):
+                Cg[j] = np.mod(Cl[j * Bq:(j + 1) * Bq].sum(0), P)
+            Zsh = Qsel[:, r].copy()
+            Qp = int(Zsh.sum() % P)
+            alpha = int(c.rng.integers(1, P))
+            apow = np.array([pow(alpha, t, P) for t in range(R)], np.int64)
+            Ap = c.share(apow)                                             # preprocessing (HE in the real protocol)
+            t0 = time.perf_counter()
+            tau = int(np.mod(Zsh - Ap[:, 1], P).sum() % P)                 # masked opening to the server, broadcast
+            tp = np.array([pow(tau, i, P) for i in range(R)], np.int64)
+            ck_ = fastops.ck()
+            Tm = np.empty((R, R), np.int64)
+            ck_[4](Bn, Dm, tp, Tm)
+            t1 = time.perf_counter()
+            zh = np.empty((R, m), np.int64)
+            ck_[5](Tm, np.ascontiguousarray(Ap.T), zh)
+            eh = np.empty((K, m), np.int64)
+            ck_[5](Cg, zh, eh)
+            e = eh.T.copy()
+            t2 = time.perf_counter()
+            if not (0 <= Qp < R):                                          # outside the interpolation domain the real protocol is undefined;
+                e = np.zeros_like(e)                                       # the simulator treats it as a miss (counted, see lsh stats)
+                mt.cnt["oor"] += 1
+            mt.tcli[("setup", "lag_onehot")] += (t1 - t0) + (t2 - t1) / m
+            ehat.append(e)
+            mt.cnt[f"lag_conv:{R}"] += 1
+        mt.c2s("lag_open", s * BPE)
+        mt.s2c("lag_open", s * BPE)
+        mt.flights("lag_open", 2)
+        return ehat
+
+    def upper(self):
+        prm, srv, c, mt = self.prm, self.srv, self.c, self.mt
+        s, d, m, U = prm.s, prm.d, prm.m, srv.U
+        pub = srv.pub
+        K, offs = pub["K"], pub["off"]
+        i0, v0, l0, xv0, nv0 = srv.entry_state()
+        i, v, l = c.share(i0), c.share(v0), c.share(l0)
+        xs = c.share(xv0[None, :])
+        dv = self.dist_multi(xs, c.share(np.array([nv0])))[:, 0]
+        act = c.share(1 if l0 > 0 else 0)
+        Qall = self.client_hash_all(self.qplain)
+        mt.phase = "upper"
+        for it in range(prm.Tg):
+            ireq, = c.myao(lambda a, b: [np.where(a == 1, b, 0)], [act, i], "mux_row")
+            e = self.onehot(ireq, U)
+            th_all = self.read1d_multi(self.theta32, e[:, None, :], "read1d_theta")[:, 0, :]
+            down = th_all[:, 2]
+            Qsel = self.select_dot(e, Qall)
+            ehat = self.lag_onehots(Qsel)
+            X_list, Y_list = [], []
+            for r in range(s):
+                e0 = ehat[r]
+                e1 = np.zeros_like(e0)
+                e1[:, 1:] = e0[:, :-1]
+                Yp = np.stack([e0, e1], 1)                                 # (m,2,K_r): probes eps = 0, 1
+                blk = th_all[:, offs[r]:offs[r] + 3 * K[r]].reshape(m, 3, K[r])
+                X_list.append(np.broadcast_to(blk[:, None, :, :], (m, 2, 3, K[r])).reshape(m, -1))
+                Y_list.append(np.broadcast_to(Yp[:, :, None, :], (m, 2, 3, K[r])).reshape(m, -1))
+            Xc, Yc = np.concatenate(X_list, 1), np.concatenate(Y_list, 1)
+            prod = c.mul(Xc, Yc, "beaver_dict")
+            Tsh = np.zeros((m, s, 2, 3), np.int64)
+            pos = 0
+            for r in range(s):
+                n_ = 2 * 3 * K[r]
+                Tsh[:, r] = np.mod(prod[:, pos:pos + n_].reshape(m, 2, 3, K[r]).sum(-1), P)
+                pos += n_
+
+            def fnC(T):
+                found, cc, crow = 0, 0, 0
+                for r in range(s):
+                    for eps in range(2):
+                        valid, idv, nxt = (int(x) for x in T[r, eps])
+                        if valid == 1 and not found:
+                            cc, crow = idv, nxt
+                        found = found or int(valid == 1)
+                return [cc, crow, found]
+            cand, crow, found = c.myao(fnC, [Tsh], "match_direct")
+            ec2 = self.onehot(cand, srv.prm.N + 1)
+            vec = self.read1d_multi(self.Avec32, ec2[:, None, :], "read1d_vec")[:, 0, :]
+            dc = self.dist_multi(vec[:, None, :d], vec[:, None, d])[:, 0]
+
+            def fnD(act_, found_, c_, dc_, dv_, crow_, v_, l_, down_):
+                nv, nd, ni, nl, na, gam = upper_transition(
+                    int(act_), int(found_), int(c_), int(dc_), int(dv_), int(crow_),
+                    int(v_), int(l_), int(down_))
+                return [nv, nd, ni, nl, na]
+            v, dv, i, l, act = c.myao(fnD, [act, found, cand, dc, dv, crow, v, l, down], "transition")
+        return v, dv
+
+
 def prepare(srv, mask=False):
     """uint32 copies of the server's tables for the numba kernels."""
     th = np.ascontiguousarray(srv.theta.astype(np.uint32))
@@ -553,7 +705,7 @@ def run_query(srv, prep, q, m_seed, aes_ands=6400, mode="he"):
     meter = Meter(prm.m)
     gcm = GCModel(prm, srv.U, wmax, aes_ands)
     mpc = MPCM(prm.m, meter, gcm, seed=m_seed)
-    sec = {"mask": SecureMask, "pub": SecurePublic}.get(mode, SecureFast)(srv, mpc, meter, gcm, th, av, aj)
+    sec = {"mask": SecureMask, "pub": SecurePublic, "node": SecureNodePub}.get(mode, SecureFast)(srv, mpc, meter, gcm, th, av, aj)
     sec.qplain = q
     blocks = [q[idx] for idx in prm.blocks]
     t0 = time.perf_counter()

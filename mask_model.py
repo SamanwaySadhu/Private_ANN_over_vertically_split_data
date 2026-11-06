@@ -131,9 +131,17 @@ if det is not None:
         srv_t += d["calls"] * (t["prep"] + t["tiled"] + t["reduce"])
         cli_mask += d["calls"] * tc["mask"]
         cli_post += d["calls"] * tc["post"]
+    cli_sel = cli_nq = 0.0
     for key, d in det["bv"].items():
+        if key.startswith("beaver_sel:") and det.get("sel"):
+            continue                                   # per-node public-LSH selection is timed with its own kernels below
         tc = d[TC_] if TC_ in d else d[sorted(d.keys() - {"calls"})[-1]]
         cli_bv += d["calls"] * (tc["open"] + tc["finish"] + tc["dsum"])
+    for key, d in (det.get("sel") or {}).items():
+        tc = d[TC_] if TC_ in d else d[sorted(d.keys() - {"calls"})[-1]]
+        cli_sel += d["calls"] * (tc["open"] + tc["part"])
+    if det.get("node_q"):
+        cli_nq = det["node_q"][TC_] if TC_ in det["node_q"] else list(det["node_q"].values())[-1]
     for key, d in det["lag"].items():
         tc = d[TC_] if TC_ in d else d[sorted(d.keys() - {"calls"})[-1]]
         cli_lag += d["calls"] * tc["lag"]
@@ -152,6 +160,10 @@ for i in range(1, m + 1):
         on_t["Client: reply combination [y]+[h]"][f"C{i}"] = cli_post
         if cli_lag:
             on_t["Key one-hot, local Lagrange evaluation (real, all cores)"][f"C{i}"] = cli_lag
+        if cli_nq:
+            on_t["Client: quantise own block for ALL rows and radii, once per query (all cores)"][f"C{i}"] = cli_nq
+        if cli_sel:
+            on_t["Client: Beaver dot-product selection of the visited row's hash (all cores)"][f"C{i}"] = cli_sel
     else:
         on_t["Local share arithmetic (Beaver, e-r, ...)"][f"C{i}"] = sum(float(v) for v in tcli.values()) - lagt
         if lagt:

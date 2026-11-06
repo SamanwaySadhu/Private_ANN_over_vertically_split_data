@@ -22,6 +22,8 @@ from vsann import Params, plain_protocol
 from scaled import ServerScaled
 from server_pub import ServerPublic
 from plain_pub import plain_protocol_pub
+from plain_node import plain_protocol_node
+from server_node import ServerNodePub
 from engine import prepare, run_query
 
 G = {}
@@ -30,8 +32,8 @@ G = {}
 def _acc_worker(qi):
     srv, D = G["srv"], G["D"]
     q = D["Q"][qi]
-    if G["mode"] == "pub":
-        pres, st = plain_protocol_pub(srv, q)
+    if G["mode"] in ("pub", "node"):
+        pres, st = (plain_protocol_node if G["mode"] == "node" else plain_protocol_pub)(srv, q)
         return qi, pres, srv.hnsw_search(q, srv.prm.E, srv.prm.k), {k: int(v) for k, v in st.items()}
     pres, trace, info = plain_protocol(srv, q)
     st = Counter()
@@ -89,11 +91,11 @@ def main():
     ap.add_argument("--workers", type=int, default=os.cpu_count())
     ap.add_argument("--threads", default="1,8,64")
     ap.add_argument("--tag", default="")
-    ap.add_argument("--mode", default="he", choices=["he", "mask", "pub"], help="mask: HE only in preprocessing (DELPHI-style)")
+    ap.add_argument("--mode", default="he", choices=["he", "mask", "pub", "node"], help="mask: HE only in preprocessing (DELPHI-style)")
     ap.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
     Tb = a.Tb or 2 * a.E
-    tag = a.tag or f"{a.dataset}_N{a.N}_m{a.m}_E{a.E}" + ({"mask": "_mask", "pub": "_pub"}.get(a.mode, ""))
+    tag = a.tag or f"{a.dataset}_N{a.N}_m{a.m}_E{a.E}" + ({"mask": "_mask", "pub": "_pub", "node": "_node"}.get(a.mode, ""))
     out = {"args": vars(a), "tag": tag}
 
     D = load(a.dataset, a.N, a.nq, a.k, a.seed)
@@ -101,7 +103,7 @@ def main():
                  rho=tuple(0.5 * 2 ** r for r in range(a.s)), seed=a.seed)
     print(f"[{tag}] N={D['N']} d={D['d']} m={a.m} M={a.M} E={a.E} Tb={Tb}", flush=True)
     t0 = time.time()
-    srv = (ServerPublic if a.mode == "pub" else ServerScaled)(D["X"], prm, procs=a.workers)
+    srv = {"pub": ServerPublic, "node": ServerNodePub}.get(a.mode, ServerScaled)(D["X"], prm, procs=a.workers)
     print(f"[server] built in {time.time() - t0:.1f}s  {srv.t}  U={srv.U} layers={srv.top + 1}", flush=True)
     prep = prepare(srv, mask=a.mode == "mask")
     bs = srv.build_stats
@@ -114,6 +116,11 @@ def main():
         theta_bytes=int(srv.theta.size * 4), Dtab_bytes=int(sum(t.size for t in srv.Dtab) * 4),
         Avec_bytes=int(srv.Avec.size * 4), Aadj_bytes=int(srv.Aadj.size * 4),
         raw_vectors_bytes=int(D["N"] * D["d"] * 4), U=int(srv.U), ncol=prm.ncol, H=prm.H, A=int(srv.theta.shape[0]))
+    if hasattr(srv, "node"):                    # public per-node LSH parameter table every client downloads once (a: int16, b,w,kmin: 4 B)
+        nd = srv.node
+        sz["node_table_bytes"] = int(nd["a"].size * 2 + (nd["b"].size + nd["w"].size + nd["kmin"].size) * 4)
+        sz["node_K"] = [int(k) for k in srv.pub["K"]]
+        sz["node_B"] = int(srv.pub["B"])
     sz["flattened_total_bytes"] = sz["theta_bytes"] + sz["Dtab_bytes"] + sz["Avec_bytes"] + sz["Aadj_bytes"]
     out["server_build"] = dict(times=srv.t, stats=dict(bs), sizes=sz, wmax=prep[3])
 

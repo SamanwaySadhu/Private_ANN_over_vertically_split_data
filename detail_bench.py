@@ -42,7 +42,7 @@ def best(fn, reps=5):
     return b
 
 
-out = dict(tag=TAG, m=m, reads={}, bv={}, lag={}, T=TS)
+out = dict(tag=TAG, m=m, reads={}, bv={}, lag={}, sel={}, node_q={}, T=TS)
 fastops.PARALLEL = True
 subm, bopen, bfin, slast, lagtm, mm = fastops._KP
 for T in TS:
@@ -77,6 +77,27 @@ for T in TS:
             Zd = rng.integers(0, P, (1, Kd, L // Kd)).astype(np.int64); od = np.empty((1, Kd), np.int64)
             t_sum = best(lambda: slast(Zd, od), 20)
         out["bv"].setdefault(f"{cat}:{L}", dict(calls=calls))[str(T)] = dict(open=t_open, finish=t_fin, dsum=t_sum)
+    for (cat, L), calls in bv.items():
+        if cat != "beaver_sel":
+            continue
+        s_ = 6
+        U_ = L // s_
+        nq_, sopen, spart = fastops._NP[0], fastops._NP[1], fastops._NP[2]
+        E1 = rng.integers(0, P, (1, U_)).astype(np.int64); SA1 = rng.integers(0, P, (1, U_)).astype(np.int64)
+        Q1 = rng.integers(0, P, (1, s_, U_)).astype(np.int64); SB1 = rng.integers(0, P, (1, s_, U_)).astype(np.int64)
+        ee = np.empty(U_, np.int64); ff = np.empty((s_, U_), np.int64)
+        t_open = best(lambda: sopen(E1, SA1, Q1, SB1, ee, ff), 10)
+        CH = 4096
+        part = np.empty(1 * s_ * ((U_ + CH - 1) // CH), np.int64)
+        t_part = best(lambda: spart(ee, ff, SA1, SB1, part, CH), 10)
+        out["sel"].setdefault(str(L), dict(calls=calls))[str(T)] = dict(open=t_open, part=t_part)
+        dd = 128
+        A_all = rng.integers(-60, 60, (U_, s_, dd)).astype(np.int16)
+        bb = rng.integers(0, 5000, (U_, s_)).astype(np.int64); ww = rng.integers(1000, 9000, (U_, s_)).astype(np.int64); km = rng.integers(-50, 0, (U_, s_)).astype(np.int64)
+        xq = rng.integers(0, 256, dd).astype(np.int64); oq = np.empty((s_, U_), np.int64)
+        lo_, hi_ = dd // m, 2 * (dd // m)
+        out["node_q"][str(T)] = best(lambda: nq_(A_all, lo_, hi_, xq, bb, ww, km, 0, 128, 16, 16, 1, oq), 3)
+        del A_all
     for R, nconv in lag.items():
         from vsann import lag_tables
         Cl, Bn, Dm = lag_tables(R)

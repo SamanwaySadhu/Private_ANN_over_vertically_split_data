@@ -1,0 +1,6 @@
+[hnsecw_sift_N1000000_m8_E128] N=1000000 d=128 parties=9 (server+8 clients) M=8 E=128 Tb=158
+[server] {'hnsw_build': 12.660643815994263, 'tables': 6.512320518493652, 'server_total': 24.312673091888428} layers=8 sizes=[1000000, 124597, 15844, 1949, 267, 26, 4, 1]
+[accuracy] 1000 queries in 1.3s
+[accuracy] {'recall_secure_vs_float_gt': 0.953, 'recall_hnswlib_vs_quantized_gt': 0.9408, 'frac_queries_recall1': 0.721, 'min_recall': 0.1, 'frac_ge_0_9': 0.885}
+[secure] 8 queries, wall 0.6s, identical to plain emulation: 8/8
+wrote hnsecw/results/hnsecw_sift_N1000000_m8_E128.json

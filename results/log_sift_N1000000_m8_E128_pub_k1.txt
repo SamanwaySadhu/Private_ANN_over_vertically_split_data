@@ -1,0 +1,6 @@
+[sift_N1000000_m8_E128_pub_k1] N=1000000 d=128 m=8 M=8 E=128 Tb=256
+[server] built in 85.7s  {'hnsw_build': 23.67100501060486, 'graph_import': 4.195051908493042, 'flatten_tables': 50.87137007713318, 'server_total': 84.19928574562073}  U=267045 layers=8
+[accuracy] 1000 queries in 46.8s
+[accuracy] {'recall_secure_vs_float_gt': 0.947, 'recall_secure_vs_quantized_gt': 0.947, 'recall_exact_greedy_hnsw_vs_float_gt': 0.949, 'recall_hnswlib_vs_quantized_gt': 0.952, 'frac_queries_recall1': 0.947, 'min_recall': 0.0, 'lsh_failure_rate': 0.6962, 'lsh_empty_rate': 0.0, 'bucket_cap_loss': 0.7156}
+[secure] 32 queries, wall 3806.4s, identical to plain emulation: 32/32
+wrote results/sift_N1000000_m8_E128_pub_k1.json

@@ -1,0 +1,84 @@
+[build] mask seed=20 m=8 219s U=267563 top=7 layer_nodes=[1000000, 124825, 15695, 1927, 252, 32, 5, 1]
+{"graph": 0, "m": 1, "E": 64, "variant": "base", "recall10": 0.8357, "hnswlib": 0.879}
+{"graph": 0, "m": 1, "E": 64, "variant": "fine B", "recall10": 0.8357, "hnswlib": 0.879}
+{"graph": 0, "m": 1, "E": 64, "variant": "all-radii", "recall10": 0.8763799999999999, "hnswlib": 0.879}
+{"graph": 0, "m": 1, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8763799999999999, "hnswlib": 0.879}
+{"graph": 0, "m": 1, "E": 64, "variant": "oracle entry", "recall10": 0.8789799999999999, "hnswlib": 0.879}
+{"graph": 0, "m": 2, "E": 64, "variant": "base", "recall10": 0.8394799999999999, "hnswlib": 0.879}
+{"graph": 0, "m": 2, "E": 64, "variant": "fine B", "recall10": 0.8367600000000001, "hnswlib": 0.879}
+{"graph": 0, "m": 2, "E": 64, "variant": "all-radii", "recall10": 0.8771400000000001, "hnswlib": 0.879}
+{"graph": 0, "m": 2, "E": 64, "variant": "all-radii + fine B", "recall10": 0.87646, "hnswlib": 0.879}
+{"graph": 0, "m": 2, "E": 64, "variant": "oracle entry", "recall10": 0.8789799999999999, "hnswlib": 0.879}
+{"graph": 0, "m": 8, "E": 64, "variant": "base", "recall10": 0.8426, "hnswlib": 0.879}
+{"graph": 0, "m": 8, "E": 64, "variant": "fine B", "recall10": 0.83652, "hnswlib": 0.879}
+{"graph": 0, "m": 8, "E": 64, "variant": "all-radii", "recall10": 0.8769400000000002, "hnswlib": 0.879}
+{"graph": 0, "m": 8, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8764799999999999, "hnswlib": 0.879}
+{"graph": 0, "m": 8, "E": 64, "variant": "oracle entry", "recall10": 0.8789799999999999, "hnswlib": 0.879}
+{"graph": 0, "m": 16, "E": 64, "variant": "base", "recall10": 0.84224, "hnswlib": 0.879}
+{"graph": 0, "m": 16, "E": 64, "variant": "fine B", "recall10": 0.8367400000000002, "hnswlib": 0.879}
+{"graph": 0, "m": 16, "E": 64, "variant": "all-radii", "recall10": 0.877, "hnswlib": 0.879}
+{"graph": 0, "m": 16, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8765, "hnswlib": 0.879}
+{"graph": 0, "m": 16, "E": 64, "variant": "oracle entry", "recall10": 0.8789799999999999, "hnswlib": 0.879}
+[build] mask seed=21 m=8 238s U=267230 top=6 layer_nodes=[1000000, 124779, 15485, 1892, 254, 34, 6]
+{"graph": 1, "m": 1, "E": 64, "variant": "base", "recall10": 0.8790199999999999, "hnswlib": 0.8811}
+{"graph": 1, "m": 1, "E": 64, "variant": "fine B", "recall10": 0.8790199999999999, "hnswlib": 0.8811}
+{"graph": 1, "m": 1, "E": 64, "variant": "all-radii", "recall10": 0.8816200000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 1, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8816200000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 1, "E": 64, "variant": "oracle entry", "recall10": 0.8811400000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 2, "E": 64, "variant": "base", "recall10": 0.8792400000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 2, "E": 64, "variant": "fine B", "recall10": 0.8789799999999999, "hnswlib": 0.8811}
+{"graph": 1, "m": 2, "E": 64, "variant": "all-radii", "recall10": 0.88126, "hnswlib": 0.8811}
+{"graph": 1, "m": 2, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8815, "hnswlib": 0.8811}
+{"graph": 1, "m": 2, "E": 64, "variant": "oracle entry", "recall10": 0.8811400000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 8, "E": 64, "variant": "base", "recall10": 0.87866, "hnswlib": 0.8811}
+{"graph": 1, "m": 8, "E": 64, "variant": "fine B", "recall10": 0.87908, "hnswlib": 0.8811}
+{"graph": 1, "m": 8, "E": 64, "variant": "all-radii", "recall10": 0.8809400000000002, "hnswlib": 0.8811}
+{"graph": 1, "m": 8, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8814799999999999, "hnswlib": 0.8811}
+{"graph": 1, "m": 8, "E": 64, "variant": "oracle entry", "recall10": 0.8811400000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 16, "E": 64, "variant": "base", "recall10": 0.8789600000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 16, "E": 64, "variant": "fine B", "recall10": 0.8791200000000001, "hnswlib": 0.8811}
+{"graph": 1, "m": 16, "E": 64, "variant": "all-radii", "recall10": 0.88116, "hnswlib": 0.8811}
+{"graph": 1, "m": 16, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8815, "hnswlib": 0.8811}
+{"graph": 1, "m": 16, "E": 64, "variant": "oracle entry", "recall10": 0.8811400000000001, "hnswlib": 0.8811}
+[build] mask seed=22 m=8 245s U=267979 top=7 layer_nodes=[1000000, 125065, 15605, 1959, 237, 39, 7, 1]
+{"graph": 2, "m": 1, "E": 64, "variant": "base", "recall10": 0.73038, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 1, "E": 64, "variant": "fine B", "recall10": 0.73038, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 1, "E": 64, "variant": "all-radii", "recall10": 0.8743400000000001, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 1, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8743400000000001, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 1, "E": 64, "variant": "oracle entry", "recall10": 0.8766, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 2, "E": 64, "variant": "base", "recall10": 0.7317400000000001, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 2, "E": 64, "variant": "fine B", "recall10": 0.73122, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 2, "E": 64, "variant": "all-radii", "recall10": 0.8768400000000002, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 2, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8742400000000001, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 2, "E": 64, "variant": "oracle entry", "recall10": 0.8766, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 8, "E": 64, "variant": "base", "recall10": 0.73328, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 8, "E": 64, "variant": "fine B", "recall10": 0.7316, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 8, "E": 64, "variant": "all-radii", "recall10": 0.87776, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 8, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8747400000000002, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 8, "E": 64, "variant": "oracle entry", "recall10": 0.8766, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 16, "E": 64, "variant": "base", "recall10": 0.7383800000000001, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 16, "E": 64, "variant": "fine B", "recall10": 0.73152, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 16, "E": 64, "variant": "all-radii", "recall10": 0.8778600000000001, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 16, "E": 64, "variant": "all-radii + fine B", "recall10": 0.87472, "hnswlib": 0.8765799999999999}
+{"graph": 2, "m": 16, "E": 64, "variant": "oracle entry", "recall10": 0.8766, "hnswlib": 0.8765799999999999}
+[build] mask seed=23 m=8 206s U=269231 top=7 layer_nodes=[1000000, 125607, 15748, 1988, 249, 28, 2, 1]
+{"graph": 3, "m": 1, "E": 64, "variant": "base", "recall10": 0.56868, "hnswlib": 0.87836}
+{"graph": 3, "m": 1, "E": 64, "variant": "fine B", "recall10": 0.56868, "hnswlib": 0.87836}
+{"graph": 3, "m": 1, "E": 64, "variant": "all-radii", "recall10": 0.8723200000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 1, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8723200000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 1, "E": 64, "variant": "oracle entry", "recall10": 0.8783, "hnswlib": 0.87836}
+{"graph": 3, "m": 2, "E": 64, "variant": "base", "recall10": 0.5519799999999999, "hnswlib": 0.87836}
+{"graph": 3, "m": 2, "E": 64, "variant": "fine B", "recall10": 0.5665, "hnswlib": 0.87836}
+{"graph": 3, "m": 2, "E": 64, "variant": "all-radii", "recall10": 0.8672200000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 2, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8725800000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 2, "E": 64, "variant": "oracle entry", "recall10": 0.8783, "hnswlib": 0.87836}
+{"graph": 3, "m": 8, "E": 64, "variant": "base", "recall10": 0.54774, "hnswlib": 0.87836}
+{"graph": 3, "m": 8, "E": 64, "variant": "fine B", "recall10": 0.5655600000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 8, "E": 64, "variant": "all-radii", "recall10": 0.86466, "hnswlib": 0.87836}
+{"graph": 3, "m": 8, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8725800000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 8, "E": 64, "variant": "oracle entry", "recall10": 0.8783, "hnswlib": 0.87836}
+{"graph": 3, "m": 16, "E": 64, "variant": "base", "recall10": 0.5474800000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 16, "E": 64, "variant": "fine B", "recall10": 0.56526, "hnswlib": 0.87836}
+{"graph": 3, "m": 16, "E": 64, "variant": "all-radii", "recall10": 0.8632, "hnswlib": 0.87836}
+{"graph": 3, "m": 16, "E": 64, "variant": "all-radii + fine B", "recall10": 0.8726200000000001, "hnswlib": 0.87836}
+{"graph": 3, "m": 16, "E": 64, "variant": "oracle entry", "recall10": 0.8783, "hnswlib": 0.87836}

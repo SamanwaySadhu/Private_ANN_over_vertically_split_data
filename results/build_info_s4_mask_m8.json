@@ -1,0 +1,1 @@
+{"mode": "mask", "seed": 4, "m": 8, "U": 268061, "top": 6, "layer_nodes": [1000000, 125041, 15682, 1993, 258, 38, 7], "ep": 237855, "stats": {"points": 7240242, "kept": 2045224, "cuckoo_retries": 0, "stash_used": 12}, "times": {"hnsw_build": 10.14581823348999, "graph_import": 1.6591970920562744, "flatten_tables": 70.3457396030426, "server_total": 90.00101447105408}}

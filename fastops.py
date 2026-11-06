@@ -225,6 +225,77 @@ _KP = _client_kernels(True)
 _KS = _client_kernels(False)
 
 
+def _node_kernels(parallel):
+    """Kernels of the per-node public-LSH variant (one client's work)."""
+    deco = njit(parallel=parallel)
+
+    @deco
+    def node_quantize(A, lo, hi, x, b, w, kmin, c0, B, Sw, Sa, Sq, out):
+        """out[r, row] = floor(B * Sw * (<a[row,r,lo:hi], x[lo:hi]> (+ b*Sq at client 0)) / (Sa*Sq*w)) (- B*kmin at client 0):
+        this client's local quantised projection of its OWN block for ALL rows and radii (public parameters)."""
+        U, s, _ = A.shape
+        for rho in prange(U):
+            for r in range(s):
+                dot = np.int64(0)
+                for t in range(lo, hi):
+                    dot += np.int64(A[rho, r, t]) * x[t]
+                if c0 == 1:
+                    dot += b[rho, r] * Sq
+                q = (B * (Sw * dot)) // (Sa * Sq * w[rho, r])
+                if c0 == 1:
+                    q -= B * kmin[rho, r]
+                out[r, rho] = q
+
+    @deco
+    def sel_open(E, SA, Q, SB, ee, ff):
+        """Beaver-dot opening: ee[j] = sum_c (E-SA), ff[r,j] = sum_c (Q-SB)  (mod P); E,SA (m,U), Q,SB (m,s,U)."""
+        m, U = E.shape
+        s = Q.shape[1]
+        for j in prange(U):
+            se = np.int64(0)
+            for c in range(m):
+                x = E[c, j] - SA[c, j]
+                if x < 0:
+                    x += P
+                se += x
+            ee[j] = se % P
+            for r in range(s):
+                sf = np.int64(0)
+                for c in range(m):
+                    y = Q[c, r, j] - SB[c, r, j]
+                    if y < 0:
+                        y += P
+                    sf += y
+                ff[r, j] = sf % P
+
+    @deco
+    def sel_part(ee, ff, SA, SB, part, CH):
+        """Per client c and radius r, chunk-wise partial sums of  ee*SB + ff*SA  (+ ee*ff at client 0). part (m*s*nch)."""
+        m, s, U = SB.shape
+        nch = (U + CH - 1) // CH
+        for t in prange(m * s * nch):
+            ch = t % nch
+            cr = t // nch
+            r = cr % s
+            c = cr // s
+            acc = np.int64(0)
+            for j in range(ch * CH, min(U, ch * CH + CH)):
+                acc += (ee[j] * SB[c, r, j]) % P + (ff[r, j] * SA[c, j]) % P
+                if c == 0:
+                    acc += (ee[j] * ff[r, j]) % P
+            part[t] = acc % P
+
+    return node_quantize, sel_open, sel_part
+
+
+_NP = _node_kernels(True)
+_NS = _node_kernels(False)
+
+
+def nk():
+    return _NP if PARALLEL else _NS
+
+
 def ck():
     """client kernels for the current mode"""
     return _KP if PARALLEL else _KS
