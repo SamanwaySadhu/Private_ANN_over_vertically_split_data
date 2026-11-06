@@ -1,0 +1,5 @@
+[tiptoe_synth_N1000000_m4_b4] N=1000000 d=128 server + 4 clients, C=1000 clusters, 4-bit embeddings, p=2^17
+[server] {'C': 1000, 'mc': 1800, 'd': 128, 'bits': 4, 'lt': 17, 'limbs': 2, 'rows': 1800, 'id_rows': 5400, 'upload_dim': 128000, 'cluster_min': 31, 'cluster_max': 1800, 'cluster_mean': 1165.682, 'stored': 1165682, 'moved': 5521, 'dropped_dups': 34318, 'M_bytes': 230400000, 'Mid_bytes': 10800000} build 29.5s
+[accuracy] 200 queries in 0.3s recall@10 = 0.1030
+[secure] 4 queries, wall 1.6s, identical to plain emulation: 4/4
+wrote tiptoe/results/tiptoe_synth_N1000000_m4_b4.json
